@@ -1,0 +1,23 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+page_analyzer/__pycache__/
+tests/__pycache__/
+page_analyzer/scripts/__pycache__/
+templates/__pycache__/
+
+# Distribution / packaging
+dist/
+
+# Unit test / coverage reports
+.pytest_cache/
+.coverage
+
+# Environments
+.env
+.venv/
+venv
+dev_database
+test_database
+
+# VS Code
+.vscode/

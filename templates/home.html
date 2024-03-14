@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Analysis</title>
+  <style>
+    input[type=button],
+    input[type=submit],
+    input[type=reset] {
+      background-color: #04AA6D;
+      border: none;
+      color: white;
+      padding: 16px 32px;
+      text-decoration: none;
+      margin: 4px 2px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    input[type=text] {
+
+      padding: 6px 12px;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #212529;
+      background-color: #fff;
+      background-clip: padding-box;
+      border: 1px solid #ced4da;
+      appearance: none;
+      border-radius: 4px;
+      transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+
+    }
+
+    .optionselect {
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    .option {
+      padding: 5px;
+      line-height: 16px;
+      font-size: 14px;
+      gap: 10px;
+    }
+
+    .mainform {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #output {
+      white-space: pre-wrap;
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #f2f2f2;
+      border-radius: 5px;
+      max-width: 100vw;
+      min-height: 250px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <form class="mainform" id="analysisForm">
+    <h1>Website Analysis</h1>
+    <div>
+      <label for="urlInput">Enter URL:</label>
+      <input type="text" id="urlInput" name="url" required><br><br>
+    </div>
+
+    <div>
+      <label for="operationSelect">Select Operation:</label>
+      <select class="optionselect" id="operationSelect" name="operation">
+        <option class="option" value="get_info">Get Info</option>
+        <option class="option" value="get_subdomains">Get Subdomains</option>
+        <option class="option" value="get_asset_domains">Get Asset Domains</option>
+      </select><br><br>
+    </div>
+
+    <input type="submit" value="Submit">
+  </form>
+  <div id="output"></div>
+
+
+  <script>
+    document.getElementById("analysisForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      const form = new FormData(this);
+      const formData = Object.fromEntries(form.entries());
+
+      fetch("/", {
+          method: "POST",
+          body: JSON.stringify(formData),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("output").innerHTML = formatJson(data);
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          document.getElementById("output").innerHTML = "An error occurred. Please try again.";
+        });
+    });
+
+    function formatJson(json) {
+      return JSON.stringify(json, null, 2);
+    }
+  </script>
+</body>
+
+</html>
