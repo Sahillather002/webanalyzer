@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_socketio import SocketIO, emit
 import requests
 from bs4 import BeautifulSoup
@@ -92,93 +92,35 @@ def get_asset_domains(html_content):
         "anchors": list(asset_domains["anchors"])
     }
 
-# WebSocket endpoint
-@socketio.on('connect')
-def handle_connect():
-    print('Client connected')
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        data = request.get_json()
+        url = data.get('url')
+        operation = data.get('operation')
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
+        if not url:
+            return jsonify({"error": "URL parameter is required"}), 400
 
-@socketio.on('message')
-def handle_message(message):
-    if 'url' in message:
-        url = message['url']
         try:
             response = requests.get(url)
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
-            emit('message', {'error': str(e)})
-            return
+            return jsonify({"error": str(e)}), 400
 
-        # Extracting domain information
-        domain_info = get_domain_info(url)
-
-        # Extracting subdomain information
-        subdomain_info = get_subdomain_info(response.content)
-
-        # Extracting asset domains
-        asset_domains = get_asset_domains(response.content)
-
-        # Constructing the output
-        output = {
-            "info": domain_info,
-            "subdomains": subdomain_info["Subdomains"],
-            "asset_domains": asset_domains
-        }
-
-        emit('message', {'data': output})
-
-    elif 'operation' in message:
-        operation = message['operation']
         if operation == 'get_info':
-            url = message.get('url')
-            if url:
-                domain_info = get_domain_info(url)
-                emit('message', {'data': {'info': domain_info}})
-            else:
-                emit('message', {'error': 'URL is missing'})
-
+            domain_info = get_domain_info(url)
+            return jsonify({'data': {'info': domain_info}})
         elif operation == 'get_subdomains':
-            url = message.get('url')
-            if url:
-                try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as e:
-                    emit('message', {'error': str(e)})
-                    return
-
-                subdomain_info = get_subdomain_info(response.content)
-                emit('message', {'data': {'subdomains': subdomain_info["Subdomains"]}})
-            else:
-                emit('message', {'error': 'URL is missing'})
-
+            subdomain_info = get_subdomain_info(response.content)
+            return jsonify({'data': {'subdomains': subdomain_info["Subdomains"]}})
         elif operation == 'get_asset_domains':
-            url = message.get('url')
-            if url:
-                try:
-                    response = requests.get(url)
-                    response.raise_for_status()
-                except requests.exceptions.RequestException as e:
-                    emit('message', {'error': str(e)})
-                    return
-
-                asset_domains = get_asset_domains(response.content)
-                emit('message', {'data': {'asset_domains': asset_domains}})
-            else:
-                emit('message', {'error': 'URL is missing'})
-
+            asset_domains = get_asset_domains(response.content)
+            return jsonify({'data': {'asset_domains': asset_domains}})
         else:
-            emit('message', {'error': 'Invalid operation'})
+            return jsonify({"error": "Invalid operation"}), 400
 
-    else:
-        emit('message', {'error': 'Invalid message format. Message must contain "url" or "operation" attribute.'})
-
-@app.route('/')
-def index():
-    return "Hello, this is a WebSocket server."
+    return render_template('home.html')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
